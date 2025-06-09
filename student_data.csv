@@ -1,0 +1,51 @@
+Student_ID,Name,Age,Gender,Department,Year,GPA,Credits_Completed,Scholarship,Attendance_%
+S1000,Student_0,24,Other,Economics,3,3.57,54,No,96.3
+S1001,Student_1,21,Male,Mathematics,2,2.4,54,No,69.97
+S1002,Student_2,22,Male,Computer Science,4,3.03,52,Yes,76.42
+S1003,Student_3,24,Other,Biology,4,3.18,24,Yes,90.22
+S1004,Student_4,20,Female,Economics,4,2.09,125,Yes,69.15
+S1005,Student_5,25,Male,Computer Science,2,3.22,122,Yes,63.08
+S1006,Student_6,22,Male,Biology,3,2.34,60,Yes,71.59
+S1007,Student_7,22,Male,Computer Science,2,2.13,47,No,66.45
+S1008,Student_8,24,Other,Economics,2,3.9,26,Yes,97.19
+S1009,Student_9,19,Male,Mathematics,3,3.93,92,Yes,92.32
+S1010,Student_10,20,Other,Economics,4,3.62,91,Yes,85.34
+S1011,Student_11,24,Other,Mathematics,4,2.61,31,No,94.86
+S1012,Student_12,20,Other,Economics,3,2.2,53,Yes,92.15
+S1013,Student_13,20,Male,Physics,2,3.37,52,No,67.46
+S1014,Student_14,25,Other,Computer Science,2,2.88,67,No,95.7
+S1015,Student_15,22,Female,Computer Science,4,2.24,42,Yes,81.57
+S1016,Student_16,21,Male,Physics,1,2.99,81,Yes,92.3
+S1017,Student_17,25,Male,Mathematics,1,2.07,107,No,95.84
+S1018,Student_18,25,Male,Computer Science,1,3.82,56,No,72.72
+S1019,Student_19,20,Male,Physics,2,2.52,118,No,64.4
+S1020,Student_20,23,Male,Computer Science,2,3.33,63,No,69.12
+S1021,Student_21,22,Other,Biology,4,2.62,123,No,77.08
+S1022,Student_22,19,Other,Mathematics,1,3.04,105,Yes,92.72
+S1023,Student_23,25,Male,Biology,4,3.09,110,Yes,94.43
+S1024,Student_24,21,Other,Mathematics,4,2.37,54,Yes,60.28
+S1025,Student_25,23,Male,Physics,4,3.94,84,Yes,80.43
+S1026,Student_26,23,Other,Mathematics,3,3.55,118,No,76.7
+S1027,Student_27,19,Other,Mathematics,1,3.88,120,Yes,68.88
+S1028,Student_28,25,Other,Physics,1,3.79,66,Yes,64.79
+S1029,Student_29,21,Other,Mathematics,3,3.2,97,Yes,73.5
+S1030,Student_30,22,Female,Computer Science,3,3.84,22,Yes,97.72
+S1031,Student_31,18,Male,Economics,1,2.18,20,Yes,72.93
+S1032,Student_32,21,Female,Physics,3,2.39,24,Yes,80.75
+S1033,Student_33,19,Other,Economics,4,2.09,109,Yes,88.12
+S1034,Student_34,23,Female,Physics,2,2.65,33,Yes,74.55
+S1035,Student_35,22,Male,Physics,4,2.78,122,Yes,98.87
+S1036,Student_36,21,Male,Biology,1,2.54,46,No,98.5
+S1037,Student_37,18,Other,Biology,3,3.66,28,Yes,70.07
+S1038,Student_38,18,Female,Mathematics,2,2.71,98,Yes,79.89
+S1039,Student_39,20,Female,Economics,1,2.56,34,No,72.04
+S1040,Student_40,20,Female,Physics,3,3.09,109,No,71.39
+S1041,Student_41,24,Male,Mathematics,2,2.28,61,Yes,61.48
+S1042,Student_42,19,Male,Computer Science,2,3.6,96,Yes,84.38
+S1043,Student_43,25,Female,Physics,3,2.15,70,No,80.11
+S1044,Student_44,21,Male,Computer Science,2,3.97,82,Yes,62.06
+S1045,Student_45,21,Male,Mathematics,1,3.54,115,No,71.15
+S1046,Student_46,25,Female,Biology,3,2.4,122,No,96.33
+S1047,Student_47,24,Male,Mathematics,4,2.01,71,Yes,69.58
+S1048,Student_48,23,Female,Computer Science,1,3.63,115,Yes,65.8
+S1049,Student_49,23,Female,Physics,1,3.41,23,Yes,79.58
