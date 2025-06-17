@@ -186,6 +186,96 @@ def classify_query(user_query):
     decision = get_response(system_prompt, user_query).strip().lower()
     return decision
 
+import pandas as pd
+from collections import Counter
+
+import pandas as pd
+import re
+from collections import Counter
+
+def initial_data_check(df: pd.DataFrame):
+    print("\n🔍 Initial Dataset Check\n" + "-" * 40)
+    
+    print(f"\n🧾 Total Rows: {len(df)}")
+    print(f"🧾 Total Columns: {len(df.columns)}\n")
+
+    def infer_dtype(series):
+        if pd.api.types.is_integer_dtype(series):
+            return "int"
+        elif pd.api.types.is_float_dtype(series):
+            return "float"
+        elif pd.api.types.is_bool_dtype(series):
+            return "bool"
+        elif pd.api.types.is_datetime64_any_dtype(series):
+            return "datetime"
+        elif pd.api.types.is_string_dtype(series):
+            return "str"
+        else:
+            return "unknown"
+
+    email_regex = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
+    mobile_regex = re.compile(r"^\+?[1-9]\d{9,14}$")  # E.164-like international format
+
+    for col in df.columns:
+        print(f"\n📌 Column: {col}")
+        col_data = df[col]
+        
+        # Check for multiple Python types
+        actual_types = col_data.dropna().map(type).value_counts()
+        type_names = [t.__name__ for t in actual_types.index]
+        multiple_types = len(type_names) > 1
+
+        inferred_type = infer_dtype(col_data)
+        type_flag = f"{inferred_type} ({'MIXED TYPES: ' + ', '.join(type_names)})" if multiple_types else inferred_type
+        print(f"  • Inferred Type: {type_flag}")
+        
+        total_nulls = col_data.isnull().sum()
+        total_not_nulls = col_data.notnull().sum()
+        unique_vals = col_data.nunique(dropna=True)
+        print(f"  • Null Values: {total_nulls}")
+        print(f"  • Non-Null Values: {total_not_nulls}")
+        print(f"  • Unique Values: {unique_vals}")
+
+        # Special checks
+        if inferred_type == "datetime":
+            try:
+                datetimes = pd.to_datetime(col_data, errors="coerce")
+                invalid_dates = datetimes.isnull().sum()
+                out_of_range = ((datetimes.dt.year < 1900) | (datetimes.dt.year > 2100)).sum()
+                print(f"  • Invalid datetime values: {invalid_dates}")
+                print(f"  • Out-of-range years: {out_of_range}")
+            except Exception as e:
+                print(f"  • ⚠️ Error parsing datetimes: {e}")
+
+        elif inferred_type == "str":
+            valid_emails = col_data.dropna().apply(lambda x: bool(email_regex.fullmatch(str(x)))).sum()
+            valid_mobiles = col_data.dropna().apply(lambda x: bool(mobile_regex.fullmatch(str(x)))).sum()
+            if valid_emails > 0:
+                print(f"  • ✅ Email-like values: {valid_emails}")
+            if valid_mobiles > 0:
+                print(f"  • ✅ Mobile number-like values: {valid_mobiles}")
+
+        # Numerical Stats
+        if inferred_type in ["int", "float"]:
+            print(f"  • Mean: {col_data.mean():.2f}")
+            print(f"  • Median: {col_data.median():.2f}")
+            print(f"  • Mode: {col_data.mode().values[:1]}")
+            print(f"  • Std Dev: {col_data.std():.2f}")
+            print(f"  • Min: {col_data.min()}")
+            print(f"  • Max: {col_data.max()}")
+
+        elif inferred_type in ["str", "bool"]:
+            mode_vals = col_data.mode().values[:1]
+            print(f"  • Mode: {mode_vals}")
+
+        # Top 10 Frequent Values
+        top_vals = col_data.value_counts(dropna=False).head(10)
+        print("  • Top 10 Values:")
+        for val, count in top_vals.items():
+            print(f"     - {repr(val)}: {count} times")
+
+    print("\n✅ Dataset profiling complete.\n")
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: python ai_analyst.py <path_to_csv>")
@@ -193,12 +283,12 @@ def main():
 
     file_path = sys.argv[1]
     df = load_csv(file_path)
-
+    initial_data_check(df)
     while True:
         question = input("\nAsk a question about the data (or type 'exit' to quit): ")
         if question.lower() == 'exit':
             break
-
+        
         decision = classify_query(question)
         if decision == "graph":
             answer = generate_plot(df, question)
