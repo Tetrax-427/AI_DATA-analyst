@@ -2,6 +2,8 @@
 Take csv path as command line arg
 Then allows user to ask question based on the CSV data.
 
+Agent, that classify if output requires Image or not
+Plotting not supported yet.
 """
 import pandas as pd
 import sys
@@ -33,6 +35,18 @@ def ask_question(df, question):
     
     return response
 
+def classify_query(user_query):
+    system_prompt = (
+        "You are a smart agent. Your task is to decide if the user query about a dataset "
+        "requires a visual output like a graph (bar chart, line plot, etc.) or not.\n"
+        "Respond ONLY with 'graph' or 'text'."
+    )
+    decision = get_response(system_prompt, user_query).strip().lower()
+    return decision
+
+def generate_plot(df, query):
+    return "Apolozies, but we don't support graph generation yet...."
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: python ai_analyst.py <path_to_csv>")
@@ -45,8 +59,15 @@ def main():
         question = input("\nAsk a question about the data (or type 'exit' to quit): ")
         if question.lower() == 'exit':
             break
-        answer = ask_question(df, question)
-        print("\nAI Analyst:", answer)
+
+        decision = classify_query(question)
+        if decision == "graph":
+            answer = generate_plot(df, question)
+            print("\nAI Analyst:", answer)
+        else:
+            answer = ask_question(df, question)
+            print("\nAI Analyst:", answer)
 
 if __name__ == "__main__":
     main()
+
