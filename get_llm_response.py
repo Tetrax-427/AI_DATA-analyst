@@ -29,7 +29,7 @@ def get_response_groq_text(system_prompt, user_query, model = "llama-3.3-70b-ver
 def get_response_open_ai(system_prompt, user_query,model = "gpt-4o-mini", temp = 0, top_p = 1, max_new_tokens = 1024):
     pass
 
-def get_response(system_prompt, user_query):
-    return get_response_groq_text(system_prompt, user_query)
+def get_response(system_prompt, user_query,model = "llama-3.3-70b-versatile", temp = 0, top_p = 1, max_new_tokens = 2048):
+    return get_response_groq_text(system_prompt, user_query, model = "llama-3.3-70b-versatile", temp = 0, top_p = 1, max_new_tokens = 2048)
 
 #print(get_response("Reply as a indian person", "What is the name of capital of india"))
