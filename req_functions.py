@@ -3,6 +3,17 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from get_llm_response import get_response
+import re
+
+def extract_python_code(response: str) -> str:
+    """
+    Extracts the first Python code block from a markdown-formatted string.
+    Returns only the code inside the ```python ... ``` block.
+    """
+    match = re.search(r"```python(.*?)```", response, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return ""
 
 def load_csv(file_path):
     try:
@@ -31,11 +42,17 @@ def generate_plot(df, query):
 
     Don't add columns that are not required.
     Make sure to use proper columns names, values etc, so that code doesn't fail.
+
+    Output Format :
+    A. Steps taken to solve the problem.
+    B. Final python code.
+    return python code in ```python  and ```.
     """
 
     user_query = f""" DATAFRAME : {df} \n\n QUERY :: {query} """
     response = get_response(system_prompt, user_query)
-    return response
+    code = extract_python_code(response)
+    return response, code
 
 def ask_question(df, question):
     # Convert a sample of the dataframe to string for token limits
@@ -54,8 +71,18 @@ def ask_question(df, question):
     Verify your answer, that it is correct with respect to the data.
     Make sure you don't miss any data point and output in correct format.
     Seprate your steps from actual final output.
-    Data sample:
+
+    Data :
     {data}
+
+
+    Output Format :: 
+    A. Steps to solve problem.
+    B. Execution of plan
+    C. Final Result, and conclusion
+    
+    Make sure final concluson and reuslts only conatains the requrired information asked by the User, nothing extra
+    
     """
 
     user_query = question
@@ -91,6 +118,12 @@ def generate_insight(df, query):
         5. Return the findings.
         Answer in a professional tone.
 
+        Output Format:
+        A. steps to solve the problem.
+        B. execution of plan.
+        C. Final conclusion and results.
+
+        Make sure final concluson and reuslts only conatains the requrired information asked by the User, nothing extra
     """
     user_query = f"{query}" 
 
@@ -129,6 +162,13 @@ def check_data_quality(df, query):
         5. return the findings.
         Answer in a professional tone.
 
+        Output Format:
+        A. Plan to solve the problem.
+        B. Execution of plan.
+        C. Final conlcusion.
+
+        Make sure final concluson and reuslts only conatains the requrired information asked by the User, nothing extra
+
     """
     user_query = f"{query}" 
 
@@ -156,21 +196,35 @@ def update_data(df, query):
         Always add the code to save the DataFrame to CSV.
         And use "file_path" as variable name to read CSV.
         Return Python code.
-    """
-    user_query = f"DataFrame : {df}, \n\n QUERY : {query}" 
 
-    updates = get_response(system_prompt, user_query)
-    return updates
+        Output Format :
+    A. Steps taken to solve the problem.
+    B. Final python code.
+    return python code in ```python  and ```.
+    """
+
+    user_query = f""" DATAFRAME : {df} \n\n QUERY :: {query} """
+    response = get_response(system_prompt, user_query)
+    code = extract_python_code(response)
+    return response, code
+
 
 def classify_query(user_query):
-    system_prompt = (
-        "You are an intelligent agent. Your task is to classify the user's query into one of three categories:\n\n"
-        "1. 'graph' - if the query is asking for a chart, visual, or plot.\n"
-        "2. 'insight' - if the query asks for trends, patterns, correlations, or underlying information in the data.\n"
-        "3. 'quality_check' - if the query asks for some quality checks related to data."
-        "4. 'update_data' - if query requires the updation of original data."
-        "5. 'text' - if the query just requires a basic textual answer from the data.\n\n"
-        "Respond with ONLY one word: graph, insight, or text."
-    )
+    system_prompt = """
+        Given a user_query, classify the query into one of the following categories:
+
+        1. "GRAPH" : If the user_query asks for a visual aid, like graph, chart or plot.
+
+        2. "INSIGHT" : if the user_query asks to find the underlying information from the data, like some kind of patters, 
+                        correlations and
+
+        3. "QUALITY_CHECK" : if user_query asks for checking issues like missing data, wrong types, outliers, or inconsistencies.
+
+        4. "UPDATE_DATA" : if user_query asks for modifying, adding, or deleting data.
+
+        5. "TEXT" : for general questions, help requests, or anything not strictly covered above.
+
+        Respond with ONLY one word: GRAPH, INSIGHT, QUALITY_CHECK, UPDATE_DATA, TEXT
+    """
     decision = get_response(system_prompt, user_query).strip().lower()
     return decision
