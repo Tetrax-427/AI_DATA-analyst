@@ -228,3 +228,45 @@ def classify_query(user_query):
     """
     decision = get_response(system_prompt, user_query).strip().lower()
     return decision
+
+
+def check_col_values(df, col_name): 
+    return col_name
+
+def list_col_names(df, col_names):
+    result = {}
+    for col in col_names:
+        try:
+            value_counts = df[col].value_counts(dropna=True).to_dict()
+            result[col] = value_counts
+        except Exception as e:
+            result[col] = f"Error: {e}"
+    return result
+
+
+def is_primary_key(df, col_names): 
+    result = {}
+    for col in col_names:
+        if df[col].isnull().any():
+            result[col] = "❌ Contains nulls"
+        elif df[col].is_unique:
+            result[col] = "✅ Likely Primary Key"
+        else:
+            result[col] = "❌ Not unique"
+    return result
+
+def is_dependent(df, col_names):
+    result = {}
+    for col in col_names:
+        dep_cols = []
+        for other_col in df.columns:
+            if other_col == col:
+                continue
+            try:
+                grouped = df.groupby(other_col)[col].nunique()
+                if (grouped <= 1).all():
+                    dep_cols.append(other_col)
+            except Exception:
+                continue
+        result[col] = dep_cols if dep_cols else None
+    return result

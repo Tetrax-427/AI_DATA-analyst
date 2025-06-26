@@ -1,8 +1,11 @@
 import streamlit as st
 import pandas as pd
+import sqlalchemy
 from io import StringIO
 from get_llm_response import get_response
-from req_functions import classify_query, generate_plot, generate_insight, check_data_quality, update_data, ask_question
+from req_functions import (
+    classify_query, generate_plot, generate_insight, check_data_quality, update_data, ask_question,
+    check_col_values, is_primary_key, is_dependent, list_col_names)
 
 # ------------------------------
 # Session State Initialization
@@ -120,7 +123,6 @@ def generate_column_summary(df):
 # Database Support
 # ------------------------------
 def load_table_from_db(connection_string, table_name):
-    import sqlalchemy
     engine = sqlalchemy.create_engine(connection_string)
     with engine.connect() as conn:
         return pd.read_sql_table(table_name, conn)
@@ -160,7 +162,7 @@ with st.expander("🔌 Database Connector"):
     db_url = f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}" if all([db_user, db_pass, db_host, db_port, db_name]) else None
     if db_url:
         try:
-            import sqlalchemy
+            
             engine = sqlalchemy.create_engine(db_url)
             with engine.connect() as conn:
                 inspector = sqlalchemy.inspect(conn)
@@ -191,6 +193,41 @@ if uploaded_file is not None:
 # ------------------------------
 # Data Summary and Chat Section
 # ------------------------------
+
+def render_output(obj):
+    from io import StringIO
+
+    if isinstance(obj, pd.DataFrame):
+        return obj  # You will call `st.dataframe(result)` when rendering
+
+    elif isinstance(obj, dict):
+        if all(isinstance(v, dict) for v in obj.values()):
+            buffer = StringIO()
+            for key, sub_dict in obj.items():
+                buffer.write(f"#### 🔹 {key}\n")
+                sub_df = pd.DataFrame.from_dict(sub_dict, orient='index', columns=['Count'])
+                buffer.write(sub_df.to_markdown() + "\n\n")
+            return buffer.getvalue()
+
+        elif all(isinstance(v, list) for v in obj.values()):
+            lines = []
+            for key, sub_list in obj.items():
+                lines.append(f"**{key}**: {', '.join(map(str, sub_list))}")
+            return "\n".join(lines)
+
+        else:
+            df = pd.DataFrame.from_dict(obj, orient='index', columns=['Value'])
+            return df  # Return DataFrame for rendering
+
+    elif isinstance(obj, list):
+        if all(isinstance(item, dict) for item in obj):
+            return pd.DataFrame(obj)
+        else:
+            return "• " + "\n• ".join(map(str, obj))
+
+    else:
+        return f"```\n{str(obj)}\n```"
+
 if st.session_state.df is not None:
     df = st.session_state.df
     st.markdown("### 🔍 Initial Data Summary")
@@ -206,20 +243,11 @@ if st.session_state.df is not None:
         b64 = base64.b64encode(f.read()).decode()
         href = f'<a href="data:file/csv;base64,{b64}" download="{base_filename}_summary.csv">📥 Download Summary CSV</a>'
         st.markdown(href, unsafe_allow_html=True)
+
     st.markdown("### 📋 Summary Table")
     st.dataframe(summary_df)
 
-    # for col, summary in summaries.items():
-    #     with st.expander(f"📌 {col}  ({summary['Type']})"):
-    #         st.table(pd.DataFrame.from_dict({k: v for k, v in summary.items() if k != 'Top Values'}, orient='index', columns=['Value']))
-    #         st.markdown("**Top Values:**")
-    #         st.table(pd.DataFrame.from_dict(summary['Top Values'], orient='index', columns=['Count']))
-
-    # st.markdown("---")
-    # st.subheader("💬 Chat with your data")
-    
-
-    # Display chat history ABOVE the input
+    # 📝 Display chat history
     if st.session_state.chat_history:
         st.markdown("---")
         st.subheader("💬 Chat History")
@@ -229,10 +257,34 @@ if st.session_state.df is not None:
                 st.markdown(f"**🤖 AI:** {bot_reply}")
                 st.markdown("---")
 
-    st.subheader("💬 Chat with your data")
-    user_input = st.text_input("Ask a question about your data:", key="chat_input", value="")
+    st.markdown("### 🛠️ Run Backend Command")
+    command_options = {
+        "Check Column Values": "check_col_values",
+        "Is Primary Key": "is_primary_key",
+        "List Values": "list_col_names",
+        "Is Dependent Column": "is_dependent"
+    }
 
-    if st.button("Send") and user_input.strip():
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        selected_command = st.selectbox("Command", list(command_options.keys()), key="command_choice")
+    with col2:
+        selected_columns = st.multiselect("Select Columns", options=st.session_state.df.columns.tolist(), key="command_columns")
+
+    if st.button("Run Command", key="run_command_btn"):
+        func_name = command_options[selected_command]
+        try:
+            result = globals()[func_name](df, selected_columns)
+        except Exception as e:
+            result = f"❌ Error running `{func_name}`: {e}"
+        displayable_result = render_output(result)
+        st.session_state.chat_history.append((f"[{func_name}] {', '.join(selected_columns)}", displayable_result))
+        st.rerun()
+
+    st.subheader("💬 Chat with your data")
+    user_input = st.text_input("Ask a question about your data:", key="chat_input")
+
+    if st.button("Send", key="chat_send_btn") and user_input.strip():
         decision = classify_query(user_input)
         code = None
         if decision == "graph":
@@ -245,19 +297,9 @@ if st.session_state.df is not None:
             answer, code_updation = update_data(df, user_input)
         else:
             answer = ask_question(df, user_input)
-        st.session_state.chat_history.append((user_input, answer))
 
-        # if code:
-        #     with st.expander("📄 See Generated Code"):
-        #         st.code(code, language="python")
-        #     try:
-        #         import matplotlib.pyplot as plt
-        #         exec_globals = {"df": df, "plt": plt, "st": st}
-        #         exec(code, exec_globals)
-        #         st.pyplot(plt.gcf())
-        #         plt.clf()
-        #     except Exception as e:
-        #         st.error(f"⚠️ Failed to render plot: {e}")
+        st.session_state.chat_history.append((user_input, answer))
         st.rerun()
+    
 
     
